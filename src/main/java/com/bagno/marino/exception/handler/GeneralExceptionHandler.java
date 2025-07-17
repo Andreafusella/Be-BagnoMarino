@@ -2,6 +2,8 @@ package com.bagno.marino.exception.handler;
 
 import com.bagno.marino.exception.BaseException;
 import com.bagno.marino.exception.ValidationException;
+import com.bagno.marino.exception.general.BadRequestException;
+import com.bagno.marino.exception.general.IllegalArgumentException;
 import com.bagno.marino.exception.model.ErrorResponse;
 import com.bagno.marino.exception.model.InternalErrorCode;
 import com.bagno.marino.exception.model.Error;
@@ -34,6 +36,43 @@ public class GeneralExceptionHandler {
     /**
      * handle the exception throw when an argument annotated with @Valid does not respect the constraints
      */
+
+    @ExceptionHandler(BadRequestException.class)
+    private ResponseEntity<ErrorResponse> badRequestHandler(DataIntegrityViolationException ex, WebRequest request) {
+
+        ConstraintViolationException constraintViolationException = (ConstraintViolationException) ex.getCause();
+
+        Error error = new Error(InternalErrorCode.BAD_REQUEST, constraintViolationException.getSQLException().getMessage(), constraintViolationException.getSQL());
+        BaseException baseException = new BaseException();
+        baseException.addError(error);
+        baseException.setStackTrace(ex.getStackTrace());
+
+        ErrorResponse errorResponse = getErrorResponse(baseException, HttpStatus.BAD_REQUEST, request);
+
+        logError(baseException, errorResponse, request);
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.valueOf(errorResponse.getStatus()));
+
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    private ResponseEntity<ErrorResponse> illegalArgumentHandler(DataIntegrityViolationException ex, WebRequest request) {
+
+        ConstraintViolationException constraintViolationException = (ConstraintViolationException) ex.getCause();
+
+        Error error = new Error(InternalErrorCode.CONFLICT, constraintViolationException.getSQLException().getMessage(), constraintViolationException.getSQL());
+        BaseException baseException = new BaseException();
+        baseException.addError(error);
+        baseException.setStackTrace(ex.getStackTrace());
+
+        ErrorResponse errorResponse = getErrorResponse(baseException, HttpStatus.CONFLICT, request);
+
+        logError(baseException, errorResponse, request);
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.valueOf(errorResponse.getStatus()));
+
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     private ResponseEntity<ErrorResponse> methodArgumentNotValidHandler(MethodArgumentNotValidException ex, WebRequest request) {
 

@@ -1,13 +1,9 @@
 package com.bagno.marino.service;
 
 import com.bagno.marino.model.user.*;
-import com.r2u.memonti.model.user.*;
 import com.bagno.marino.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
-/**
- * @author MarioArcomano
- */
 @Service
 public class UserService extends AbstractService<User, UserDto, UserCreateDto, UserUpdateDto, UserPageDto, Integer> {
 

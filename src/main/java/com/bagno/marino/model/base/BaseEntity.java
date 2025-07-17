@@ -12,6 +12,6 @@ public class BaseEntity extends BaseAuditing {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    protected Integer id;
+    protected Long id;
 
 }
