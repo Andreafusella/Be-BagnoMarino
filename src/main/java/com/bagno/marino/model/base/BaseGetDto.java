@@ -8,5 +8,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class BaseGetDto extends BaseAuditing{
-    protected Integer id;
+    protected Long id;
 }

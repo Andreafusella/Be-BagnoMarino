@@ -35,8 +35,11 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
-                        .anyRequest().permitAll()
+                        .anyRequest().permitAll() // 🔓 Permetti tutto temporaneamente
                 );
+
+        // ❌ Disabilitato temporaneamente il filtro JWT per test locali
+        // http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
