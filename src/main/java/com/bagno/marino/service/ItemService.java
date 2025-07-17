@@ -1,5 +1,6 @@
 package com.bagno.marino.service;
 
+import com.bagno.marino.exception.general.BadRequestException;
 import com.bagno.marino.model.category.Category;
 import com.bagno.marino.model.category.CategoryDto;
 import com.bagno.marino.model.item.Item;
@@ -29,10 +30,14 @@ public class ItemService {
 
     private void validateCreateDto(ItemCreateDto dto) {
         String normalizedTitle = dto.getTitle().trim().toLowerCase();
-        if (itemRepository.existsByNormalizedTitle(normalizedTitle)) throw new IllegalArgumentException("Title already exists");
-        if (!categoryRepository.existsByName(dto.getCategory())) throw new IllegalArgumentException("Category does not exist");
-        if (dto.getDescription() != null && dto.getDescription().length() > 40) throw new IllegalArgumentException("Description length must be less than 100 characters");
-        if (dto.getPrice() == null || dto.getPrice() < 0) throw new IllegalArgumentException("Price must be greater than 0");
+        if (itemRepository.existsByNormalizedTitle(normalizedTitle)) throw new BadRequestException("Title already exists");
+        if (!categoryRepository.existsByName(dto.getCategory())) throw new BadRequestException("Category does not exist");
+        if (dto.getDescription() != null && dto.getDescription().length() > 40) throw new BadRequestException("Description length must be less than 100 characters");
+        if (dto.getPrice() == null || dto.getPrice() < 0) throw new BadRequestException("Price must be greater than 0");
+    }
+
+    private void validateDelete(Long id) {
+        if (!itemRepository.existsById(id)) throw new BadRequestException("Not found any item");
     }
 
     @Transactional
@@ -73,5 +78,12 @@ public class ItemService {
             list.add(categoryDto);
         }
         return list;
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        validateDelete(id);
+
+        itemRepository.deleteById(id);
     }
 }

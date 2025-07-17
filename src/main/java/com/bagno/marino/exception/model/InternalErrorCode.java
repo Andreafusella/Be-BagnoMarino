@@ -28,6 +28,7 @@ public enum InternalErrorCode {
 
     SYSTEM_LOCKED(504, "System locked"),
     //da 400 a 499 - errori di risorse
+    BAD_REQUEST(400, "Bad Request"),
     RESOURCE_NOT_FOUND(400, "Resource not found"),
     UNAUTHORIZED(401, "Unauthorized"),
     FIELD_NOT_FOUND(402, "Field not found"),
