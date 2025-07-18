@@ -1,4 +1,4 @@
-package com.bagno.marino.model.admin;
+package com.bagno.marino.model.allergens;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,13 +10,13 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class Admin {
+public class Allergens {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-    private String email;
-    private String password;
-    private String role;
+    private Integer indexAllergen;
+    private String name;
+    private String description;
 }

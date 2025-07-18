@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class ItemController {
     private ItemService itemService;
 
     @PostMapping()
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> save(@RequestBody ItemCreateDto data) {
         ItemDto response = itemService.save(data);
         return ResponseEntity.ok(response);
@@ -33,11 +35,9 @@ public class ItemController {
     }
 
     @DeleteMapping("/{itemId}")
-    public ResponseEntity<?> delete(@PathVariable Long itemId) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> delete(@PathVariable Integer itemId) {
         itemService.delete(itemId);
         return ResponseEntity.ok().build();
     }
-
-//    @GetMapping()
-//    public ResponseEntity<?> getById(@RequestParam Long id) {}
 }

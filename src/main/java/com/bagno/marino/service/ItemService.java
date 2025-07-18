@@ -1,11 +1,14 @@
 package com.bagno.marino.service;
 
 import com.bagno.marino.exception.general.BadRequestException;
+import com.bagno.marino.exception.general.IllegalArgumentException;
 import com.bagno.marino.model.category.Category;
 import com.bagno.marino.model.category.CategoryDto;
 import com.bagno.marino.model.item.Item;
 import com.bagno.marino.model.item.ItemCreateDto;
 import com.bagno.marino.model.item.ItemDto;
+import com.bagno.marino.model.itemAllergens.ItemAllergensCreateDto;
+import com.bagno.marino.repository.AllergensRepository;
 import com.bagno.marino.repository.CategoryRepository;
 import com.bagno.marino.repository.ItemRepository;
 import jakarta.transaction.Transactional;
@@ -26,17 +29,26 @@ public class ItemService {
     private CategoryRepository categoryRepository;
 
     @Autowired
+    private AllergensRepository allergensRepository;
+
+    @Autowired
+    private ItemAllergensService itemAllergensService;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     private void validateCreateDto(ItemCreateDto dto) {
         String normalizedTitle = dto.getTitle().trim().toLowerCase();
         if (itemRepository.existsByNormalizedTitle(normalizedTitle)) throw new BadRequestException("Title already exists");
         if (!categoryRepository.existsByName(dto.getCategory())) throw new BadRequestException("Category does not exist");
-        if (dto.getDescription() != null && dto.getDescription().length() > 40) throw new BadRequestException("Description length must be less than 100 characters");
-        if (dto.getPrice() == null || dto.getPrice() < 0) throw new BadRequestException("Price must be greater than 0");
+        if (dto.getDescription() != null && dto.getDescription().length() > 40) throw new IllegalArgumentException("Description length must be less than 100 characters");
+        if (dto.getPrice() == null || dto.getPrice() < 0) throw new IllegalArgumentException("Price must be greater than 0");
+        for (Integer i : dto.getAllergensIds()) {
+            if (!allergensRepository.existsById(i)) throw new BadRequestException("Allergen does not exist with id: " + i);
+        }
     }
 
-    private void validateDelete(Long id) {
+    private void validateDelete(Integer id) {
         if (!itemRepository.existsById(id)) throw new BadRequestException("Not found any item");
     }
 
@@ -52,6 +64,13 @@ public class ItemService {
         item.setCategory(category);
 
         Item itemSave = itemRepository.save(item);
+
+        for (Integer i : dto.getAllergensIds()) {
+            ItemAllergensCreateDto itemAllergensCreateDto = new ItemAllergensCreateDto();
+            itemAllergensCreateDto.setItemId(itemSave.getId());
+            itemAllergensCreateDto.setAllergenId(i);
+            itemAllergensService.create(itemAllergensCreateDto);
+        }
 
         ItemDto itemDto = new ItemDto();
         modelMapper.map(itemSave, itemDto);
@@ -81,9 +100,15 @@ public class ItemService {
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void delete(Integer id) {
         validateDelete(id);
 
         itemRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void deleteAllByCategory(Long categoryId) {
+        List<Item> items = itemRepository.findAllByCategory_Id(categoryId);
+        itemRepository.deleteAll(items);
     }
 }
