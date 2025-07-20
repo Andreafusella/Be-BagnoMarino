@@ -33,6 +33,7 @@ public enum InternalErrorCode {
     UNAUTHORIZED(401, "Unauthorized"),
     FIELD_NOT_FOUND(402, "Field not found"),
     METHOD_NOT_FOUND(403, "Method not found"),
+    NOT_FOUND(404, "Resource not found"),
 
     //da 500 a 599 - errori di sicurezza
 

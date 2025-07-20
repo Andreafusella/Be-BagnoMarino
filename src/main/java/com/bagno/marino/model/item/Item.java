@@ -1,6 +1,5 @@
 package com.bagno.marino.model.item;
 
-import com.bagno.marino.model.base.BaseEntity;
 import com.bagno.marino.model.category.Category;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -13,7 +12,7 @@ public class Item {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     private String title;
     private String description;
