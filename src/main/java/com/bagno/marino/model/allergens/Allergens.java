@@ -16,7 +16,7 @@ public class Allergens {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-    private String Symbol;
+    private String symbol;
     private String name;
     private String description;
 }
