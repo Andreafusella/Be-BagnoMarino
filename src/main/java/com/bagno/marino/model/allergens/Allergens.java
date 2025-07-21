@@ -16,7 +16,7 @@ public class Allergens {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-    private Integer indexAllergen;
+    private String Symbol;
     private String name;
     private String description;
 }

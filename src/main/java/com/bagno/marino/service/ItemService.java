@@ -91,6 +91,8 @@ public class ItemService {
             for (Item i : category.getItems()) {
                 ItemDto itemDto = new ItemDto();
                 modelMapper.map(i, itemDto);
+
+                itemDto.setAllergenes(itemAllergensService.getAllergensByItem(i));
                 listItemDto.add(itemDto);
             }
             categoryDto.setItems(listItemDto);

@@ -15,6 +15,4 @@ public class ItemCreateDto extends BaseCreateDto {
     private Double price;
     private String category;
     List<Integer> allergensIds;
-
-    //eventuali allergeni piu avanti
 }
