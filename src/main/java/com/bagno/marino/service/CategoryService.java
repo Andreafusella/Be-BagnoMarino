@@ -9,6 +9,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class CategoryService {
 
@@ -32,6 +35,7 @@ public class CategoryService {
 
         Category category = new Category();
         category.setName(dto.getName());
+        category.setIcon(dto.getIcon());
 
         categoryRepository.save(category);
     }
@@ -42,5 +46,16 @@ public class CategoryService {
         itemService.deleteAllByCategory(id);
 
         categoryRepository.deleteById(id);
+    }
+
+    public List<String> getAllCategory() {
+        List<Category> categories = categoryRepository.findAll();
+        List<String> categoriesName = new ArrayList<>();
+
+        for (Category c : categories) {
+            categoriesName.add(c.getName());
+        }
+
+        return categoriesName;
     }
 }

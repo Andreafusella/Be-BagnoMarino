@@ -9,4 +9,5 @@ import lombok.Setter;
 public class CategoryCreateDto extends BaseCreateDto {
 
     private String name;
+    private String icon;
 }

@@ -16,6 +16,8 @@ public class Category{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  Long id;
 
+    private String icon;
+
     private String name;
 
     @OneToMany(mappedBy = "category", fetch = FetchType.EAGER)
