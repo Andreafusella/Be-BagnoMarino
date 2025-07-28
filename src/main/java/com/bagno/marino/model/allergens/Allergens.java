@@ -13,8 +13,8 @@ import lombok.Setter;
 public class Allergens {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String symbol;
     private String name;

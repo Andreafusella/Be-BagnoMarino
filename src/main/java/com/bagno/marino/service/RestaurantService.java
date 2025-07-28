@@ -2,11 +2,10 @@ package com.bagno.marino.service;
 
 import com.bagno.marino.exception.general.EntityNotFoundException;
 import com.bagno.marino.model.admin.Admin;
-import com.bagno.marino.model.restaurant.Restaurant;
-import com.bagno.marino.model.restaurant.RestaurantCreateDto;
-import com.bagno.marino.model.restaurant.RestaurantDto;
-import com.bagno.marino.model.restaurant.RestaurantUpdateDto;
+import com.bagno.marino.model.restaurant.*;
 import com.bagno.marino.repository.AdminRepository;
+import com.bagno.marino.repository.CategoryRepository;
+import com.bagno.marino.repository.ItemRepository;
 import com.bagno.marino.repository.RestaurantRepository;
 import com.bagno.marino.service.util.JwtService;
 import org.modelmapper.ModelMapper;
@@ -21,6 +20,12 @@ public class RestaurantService {
 
     @Autowired
     private AdminRepository adminRepository;
+
+    @Autowired
+    private ItemRepository itemRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @Autowired
     private JwtService jwtService;
@@ -119,6 +124,20 @@ public class RestaurantService {
         RestaurantDto restaurantDto = new RestaurantDto();
         modelMapper.map(restaurant, restaurantDto);
         return restaurantDto;
+    }
+
+    public RestaurantInfoItemCategoryDto getNumberItemAndCategory() {
+        int itemAvailable = itemRepository.countByAvailableTrue();
+        int itemNotAvailable = itemRepository.countByAvailableFalse();
+
+        long category = categoryRepository.count();
+
+        RestaurantInfoItemCategoryDto dto = new RestaurantInfoItemCategoryDto();
+        dto.setItemAvailable(itemAvailable);
+        dto.setItemNotAvailable(itemNotAvailable);
+        dto.setCategory(category);
+
+        return dto;
     }
 
 

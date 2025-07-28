@@ -10,9 +10,13 @@ import java.util.List;
 @Setter
 public class ItemCreateDto extends BaseCreateDto {
 
-    private String title;
+    private String name;
     private String description;
     private Double price;
-    private String category;
-    List<Integer> allergensIds;
+    private Long category;
+    private Boolean available;
+    private Boolean special;
+    private Boolean congelato;
+    private Integer orderIndex;
+    List<Long> allergensIds;
 }

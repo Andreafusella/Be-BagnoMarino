@@ -8,7 +8,7 @@ import lombok.Setter;
 @Setter
 public class ItemAllergensCreateDto extends BaseCreateDto {
 
-    private Integer itemId;
-    private Integer allergenId;
+    private Long itemId;
+    private Long allergenId;
 
 }

@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class AllergensDto {
 
+    private Long id;
     private String symbol;
     private String name;
     private String description;

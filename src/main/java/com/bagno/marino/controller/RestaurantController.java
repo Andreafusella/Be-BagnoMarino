@@ -1,7 +1,6 @@
 package com.bagno.marino.controller;
 
 import com.bagno.marino.model.restaurant.RestaurantCreateDto;
-import com.bagno.marino.model.restaurant.RestaurantDto;
 import com.bagno.marino.model.restaurant.RestaurantUpdateDto;
 import com.bagno.marino.service.RestaurantService;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(value = "/restaurant", produces = MediaType.APPLICATION_JSON_VALUE)
 @Slf4j
-public class RestaurnatController {
+public class RestaurantController {
 
     @Autowired
     private RestaurantService restaurantService;
@@ -33,10 +32,16 @@ public class RestaurnatController {
         return ResponseEntity.ok().build();
     }
 
+//    @GetMapping()
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<?> getInfo() {
+//        RestaurantDto response = restaurantService.getInfo();
+//        return ResponseEntity.ok().body(response);
+//    }
+
     @GetMapping()
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getInfo() {
-        RestaurantDto response = restaurantService.getInfo();
-        return ResponseEntity.ok().body(response);
+    public ResponseEntity<?> getNumberItemAndCategory() {
+        return ResponseEntity.ok(restaurantService.getNumberItemAndCategory());
     }
 }

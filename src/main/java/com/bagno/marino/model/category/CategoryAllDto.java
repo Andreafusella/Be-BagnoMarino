@@ -5,9 +5,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CategoryDto {
+public class CategoryAllDto {
 
-    private Long id;
     private String name;
     private String icon;
+    private String gradient;
+    private String color;
+    private String hoverGradient;
 }

@@ -1,6 +1,6 @@
 package com.bagno.marino.controller;
 
-import com.bagno.marino.model.category.CategoryDto;
+import com.bagno.marino.model.category.CategoryWithItemsDto;
 import com.bagno.marino.model.item.ItemCreateDto;
 import com.bagno.marino.model.item.ItemDto;
 import com.bagno.marino.service.ItemService;
@@ -28,16 +28,21 @@ public class ItemController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping()
-    public ResponseEntity<?> getAll() {
-        List<CategoryDto> response = itemService.getAll();
-        return ResponseEntity.ok(response);
-    }
+//    @GetMapping()
+//    public ResponseEntity<?> getAll() {
+//        List<CategoryDtoTest> response = itemService.getAll();
+//        return ResponseEntity.ok(response);
+//    }
 
     @DeleteMapping("/{itemId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> delete(@PathVariable Integer itemId) {
+    public ResponseEntity<?> delete(@PathVariable Long itemId) {
         itemService.delete(itemId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/categories/{id}")
+    public ResponseEntity<CategoryWithItemsDto> getCategoryWithSubItems(@PathVariable Long id) {
+        return ResponseEntity.ok(itemService.getCategoryWithSubcategories(id));
     }
 }

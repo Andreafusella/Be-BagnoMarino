@@ -1,8 +1,8 @@
 package com.bagno.marino.controller;
 
 import com.bagno.marino.model.category.CategoryCreateDto;
+import com.bagno.marino.model.category.CategoryWithItemsDto;
 import com.bagno.marino.service.CategoryService;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -33,7 +33,14 @@ public class CategoryController {
     }
 
     @GetMapping()
+    public ResponseEntity<?> getAllCategoryNotSubCategory() {
+        return ResponseEntity.ok(categoryService.getAllCategoryNotSubCategory());
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllCategory() {
         return ResponseEntity.ok(categoryService.getAllCategory());
     }
+
 }

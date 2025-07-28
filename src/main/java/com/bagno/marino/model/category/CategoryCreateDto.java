@@ -10,4 +10,6 @@ public class CategoryCreateDto extends BaseCreateDto {
 
     private String name;
     private String icon;
+    private Integer orderIndex;
+    private Long subCategoryId;
 }

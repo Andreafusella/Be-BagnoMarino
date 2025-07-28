@@ -12,11 +12,15 @@ public class Item {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
-    private String title;
+    private String name;
     private String description;
     private Double price;
+    private Integer orderIndex;
+    private Boolean available;
+    private Boolean special;
+
 
     @ManyToOne
     private Category category;
