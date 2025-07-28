@@ -1,5 +1,5 @@
 # Stage 1: build con Maven + JDK 21
-FROM maven:3.9.3-jdk-21 AS builder
+FROM maven:3.9.11-eclipse-temurin-21 AS builder
 WORKDIR /app
 
 COPY . .
