@@ -16,7 +16,7 @@ public class ItemCreateDto extends BaseCreateDto {
     private Long category;
     private Boolean available;
     private Boolean special;
-    private Boolean congelato;
+    private Boolean frozen;
     private Integer orderIndex;
     List<Long> allergensIds;
 }

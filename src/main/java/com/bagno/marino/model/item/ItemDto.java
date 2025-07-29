@@ -16,6 +16,8 @@ public class ItemDto {
     private String description;
     private Double price;
     private Boolean available;
+    private Boolean special;
+    private Boolean frozen;
     private String categoryName;
     private List<AllergensDto> allergenes = new ArrayList<>();
 }

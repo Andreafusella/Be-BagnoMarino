@@ -20,6 +20,7 @@ public class Item {
     private Integer orderIndex;
     private Boolean available;
     private Boolean special;
+    private Boolean frozen;
 
 
     @ManyToOne

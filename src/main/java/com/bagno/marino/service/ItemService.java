@@ -81,6 +81,7 @@ public class ItemService {
         item.setCategory(category);
         item.setOrderIndex(orderIndex);
 
+
         Item itemSaved = itemRepository.save(item);
 
         for (Long allergenId : dto.getAllergensIds()) {
