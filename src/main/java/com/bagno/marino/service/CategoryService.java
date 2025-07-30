@@ -1,6 +1,8 @@
 package com.bagno.marino.service;
 
 import com.bagno.marino.exception.general.BadRequestException;
+import com.bagno.marino.exception.general.EntityNotFoundException;
+import com.bagno.marino.exception.general.IllegalArgumentException;
 import com.bagno.marino.model.category.Category;
 import com.bagno.marino.model.category.CategoryCreateDto;
 import com.bagno.marino.model.category.CategoryDto;
@@ -35,10 +37,11 @@ public class CategoryService {
         if (dto.getSubCategoryId() != -1) {
             if (!categoryRepository.existsById(dto.getSubCategoryId())) throw new BadRequestException("Category does not exist");
         }
+        if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0) throw new IllegalArgumentException("Order index must be greater than 0");
     }
 
     private void validateDeleteDto(Long id) {
-        if (!categoryRepository.existsById(id)) throw new BadRequestException("Category does not exist");
+
     }
 
     public void save(CategoryCreateDto dto) {
@@ -46,16 +49,23 @@ public class CategoryService {
 
         List<Category> categoriesToShift = categoryRepository.findByOrderIndexGreaterThanEqualOrderByOrderIndexAsc(dto.getOrderIndex());
 
-        for (Category c : categoriesToShift) {
-            c.setOrderIndex(c.getOrderIndex() + 1);
-        }
+        Integer orderIndex = dto.getOrderIndex();
 
-        categoryRepository.saveAll(categoriesToShift);
+        if (orderIndex == null) {
+            Integer maxOrder = categoryRepository.findMaxOrderIndex().orElse(0);
+            orderIndex = maxOrder + 1;
+        } else {
+            for (Category c : categoriesToShift) {
+                c.setOrderIndex(c.getOrderIndex() + 1);
+            }
+
+            categoryRepository.saveAll(categoriesToShift);
+        }
 
         Category category = new Category();
         category.setName(dto.getName());
         category.setIcon(dto.getIcon());
-        category.setOrderIndex(dto.getOrderIndex());
+        category.setOrderIndex(orderIndex);
 
         if (dto.getSubCategoryId() != -1) {
             category.setParent(categoryRepository.findById(dto.getSubCategoryId()).orElse(null));
@@ -67,10 +77,22 @@ public class CategoryService {
     @Transactional
     public void delete(Long id) {
         validateDeleteDto(id);
+
+        Category category = categoryRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Category not found"));
+
         itemService.deleteAllByCategory(id);
+
+        List<Category> categoriesToUpdate = categoryRepository.findByParentAndOrderIndexGreaterThanOrderByOrderIndexAsc(category.getParent(), category.getOrderIndex());
+
+        for (Category c : categoriesToUpdate) {
+            c.setOrderIndex(c.getOrderIndex() - 1);
+        }
+
+        categoryRepository.saveAll(categoriesToUpdate);
 
         categoryRepository.deleteById(id);
     }
+
 
     public List<CategoryDto> getAllCategoryNotSubCategory() {
         List<Category> categories = categoryRepository.findByParentIsNullOrderByOrderIndexAsc();

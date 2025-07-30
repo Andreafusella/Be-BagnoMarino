@@ -34,6 +34,12 @@ public class ItemController {
 //        return ResponseEntity.ok(response);
 //    }
 
+    @GetMapping()
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAll() {
+        return ResponseEntity.ok(itemService.getAll());
+    }
+
     @DeleteMapping("/{itemId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> delete(@PathVariable Long itemId) {

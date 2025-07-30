@@ -1,12 +1,14 @@
 package com.bagno.marino.service;
 
 import com.bagno.marino.exception.general.BadRequestException;
+import com.bagno.marino.exception.general.EntityNotFoundException;
 import com.bagno.marino.exception.general.IllegalArgumentException;
 import com.bagno.marino.model.category.Category;
 import com.bagno.marino.model.category.CategoryWithItemsDto;
 import com.bagno.marino.model.item.Item;
 import com.bagno.marino.model.item.ItemCreateDto;
 import com.bagno.marino.model.item.ItemDto;
+import com.bagno.marino.model.item.ItemWithCategoryDto;
 import com.bagno.marino.model.itemAllergens.ItemAllergensCreateDto;
 import com.bagno.marino.repository.AllergensRepository;
 import com.bagno.marino.repository.CategoryRepository;
@@ -51,7 +53,7 @@ public class ItemService {
     }
 
     private void validateDelete(Long id) {
-        if (!itemRepository.existsById(id)) throw new BadRequestException("Not found any item");
+
     }
 
     @Transactional
@@ -62,7 +64,6 @@ public class ItemService {
 
         Integer orderIndex = dto.getOrderIndex();
 
-        //impostare anche se è congelato o no
         if (orderIndex == null) {
             Integer maxOrder = itemRepository.findMaxOrderIndexByCategory(category).orElse(0);
             orderIndex = maxOrder + 1;
@@ -130,8 +131,21 @@ public class ItemService {
     public void delete(Long id) {
         validateDelete(id);
 
+        Item item = itemRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Item not found"));
+
+        List<Item> itemsToUpdate = itemRepository.findByCategoryAndOrderIndexGreaterThanOrderByOrderIndexAsc(
+                item.getCategory(), item.getOrderIndex()
+        );
+
+        for (Item i : itemsToUpdate) {
+            i.setOrderIndex(i.getOrderIndex() - 1);
+        }
+
+        itemRepository.saveAll(itemsToUpdate);
+
         itemRepository.deleteById(id);
     }
+
 
     @Transactional
     public void deleteAllByCategory(Long categoryId) {
@@ -139,7 +153,30 @@ public class ItemService {
         itemRepository.deleteAll(items);
     }
 
-    private void updateIndexItems() {
+    public List<ItemWithCategoryDto> getAll() {
+        List<Category> categories = categoryRepository.findAllByOrderByOrderIndexAsc();
 
+        List<ItemWithCategoryDto> response = new ArrayList<>();
+        for (Category c : categories) {
+            ItemWithCategoryDto dto = new ItemWithCategoryDto();
+            List<Item> items = itemRepository.findAllByCategory_IdOrderByOrderIndexAsc(c.getId());
+            List<ItemDto> itemDtos = new ArrayList<>();
+
+            for (Item i : items) {
+                ItemDto itemDto = new ItemDto();
+                modelMapper.map(i, itemDto);
+                itemDto.setAllergenes(itemAllergensService.getAllergensByItem(i));
+
+                itemDtos.add(itemDto);
+            }
+
+            dto.setCategory(c.getName());
+            dto.setCategoryId(c.getId());
+            dto.setCategoryIcon(c.getIcon());
+            dto.setItems(itemDtos);
+
+            response.add(dto);
+        }
+        return response;
     }
 }

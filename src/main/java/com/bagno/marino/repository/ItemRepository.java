@@ -26,4 +26,8 @@ public interface ItemRepository extends BaseRepository<Item, Long> {
 
     @Query("SELECT MAX(i.orderIndex) FROM Item i WHERE i.category = :category")
     Optional<Integer> findMaxOrderIndexByCategory(@Param("category") Category category);
+
+    List<Item> findByCategoryAndOrderIndexGreaterThanOrderByOrderIndexAsc(Category category, Integer orderIndex);
+
+    List<Item> findAllByCategory_IdOrderByOrderIndexAsc(Long id);
 }

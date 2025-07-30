@@ -15,6 +15,7 @@ public class ItemDto {
     private String name;
     private String description;
     private Double price;
+    private Integer orderIndex;
     private Boolean available;
     private Boolean special;
     private Boolean frozen;
