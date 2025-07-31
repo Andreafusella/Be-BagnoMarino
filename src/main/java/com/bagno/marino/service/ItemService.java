@@ -3,15 +3,16 @@ package com.bagno.marino.service;
 import com.bagno.marino.exception.general.BadRequestException;
 import com.bagno.marino.exception.general.EntityNotFoundException;
 import com.bagno.marino.exception.general.IllegalArgumentException;
+import com.bagno.marino.model.allergens.Allergens;
+import com.bagno.marino.model.allergens.AllergensDto;
 import com.bagno.marino.model.category.Category;
 import com.bagno.marino.model.category.CategoryWithItemsDto;
-import com.bagno.marino.model.item.Item;
-import com.bagno.marino.model.item.ItemCreateDto;
-import com.bagno.marino.model.item.ItemDto;
-import com.bagno.marino.model.item.ItemWithCategoryDto;
+import com.bagno.marino.model.item.*;
+import com.bagno.marino.model.itemAllergens.ItemAllergens;
 import com.bagno.marino.model.itemAllergens.ItemAllergensCreateDto;
 import com.bagno.marino.repository.AllergensRepository;
 import com.bagno.marino.repository.CategoryRepository;
+import com.bagno.marino.repository.ItemAllergensRepository;
 import com.bagno.marino.repository.ItemRepository;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
@@ -32,6 +33,9 @@ public class ItemService {
 
     @Autowired
     private AllergensRepository allergensRepository;
+
+    @Autowired
+    private ItemAllergensRepository itemAllergensRepository;
 
     @Autowired
     private ItemAllergensService itemAllergensService;
@@ -56,6 +60,19 @@ public class ItemService {
 
     }
 
+    private void validateUpdate(ItemUpdateDto dto) {
+        String normalizedTitle = dto.getName().toLowerCase();
+        if (itemRepository.existsByNormalizedTitle(normalizedTitle)) throw new BadRequestException("Title already exists");
+
+        if (!categoryRepository.existsById(dto.getCategory())) throw new BadRequestException("Category does not exist");
+        if (dto.getDescription() != null && dto.getDescription().length() > 40) throw new IllegalArgumentException("Description length must be less than 40 characters");
+        if (dto.getPrice() == null || dto.getPrice() < 0) throw new IllegalArgumentException("Price must be greater than 0");
+        for (Long i : dto.getAllergensIds()) {
+            if (!allergensRepository.existsById(i)) throw new BadRequestException("Allergen does not exist with id: " + i);
+        }
+        if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0) throw new IllegalArgumentException("Order index must be greater than 0");
+    }
+
     @Transactional
     public ItemDto save(ItemCreateDto dto) {
         validateCreateDto(dto);
@@ -68,13 +85,9 @@ public class ItemService {
             Integer maxOrder = itemRepository.findMaxOrderIndexByCategory(category).orElse(0);
             orderIndex = maxOrder + 1;
         } else {
-            List<Item> itemsToShift = itemRepository.findByCategoryAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(category, orderIndex);
 
-            for (Item i : itemsToShift) {
-                i.setOrderIndex(i.getOrderIndex() + 1);
-            }
-
-            itemRepository.saveAll(itemsToShift);
+            //se mette 100 e gli item sono 5 deve impostare 6 e non 100
+            updateIndexItem(category, orderIndex);
         }
 
         Item item = new Item();
@@ -96,6 +109,106 @@ public class ItemService {
         modelMapper.map(itemSaved, itemDto);
         return itemDto;
     }
+
+    public ItemDto update(ItemUpdateDto dto) {
+        validateUpdate(dto);
+
+        Item item = itemRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Not found item"));
+
+        ItemDto itemDto = new ItemDto();
+
+        if (!dto.getName().equals(item.getName())) item.setName(dto.getName());
+        if (!dto.getDescription().equals(item.getDescription())) item.setDescription(dto.getDescription());
+        if (!dto.getPrice().equals(item.getPrice())) item.setPrice(dto.getPrice());
+        if (!dto.getAvailable().equals(item.getAvailable())) item.setAvailable(dto.getAvailable());
+        if (!dto.getSpecial().equals(item.getSpecial())) item.setSpecial(dto.getSpecial());
+        if (!dto.getFrozen().equals(item.getFrozen())) item.setFrozen(dto.getFrozen());
+        if (!dto.getOrderIndex().equals(item.getOrderIndex())) {
+            int oldIndex = item.getOrderIndex();
+            int newIndex = dto.getOrderIndex();
+            Category category = item.getCategory();
+
+            if (newIndex > oldIndex) {
+                List<Item> itemsToShiftUp = itemRepository.findByCategoryAndOrderIndexBetweenOrderByOrderIndexAsc(
+                        category, oldIndex + 1, newIndex
+                );
+                for (Item i : itemsToShiftUp) {
+                    i.setOrderIndex(i.getOrderIndex() - 1);
+                }
+                itemRepository.saveAll(itemsToShiftUp);
+            } else {
+                List<Item> itemsToShiftDown = itemRepository.findByCategoryAndOrderIndexBetweenOrderByOrderIndexAsc(
+                        category, newIndex, oldIndex - 1
+                );
+                for (Item i : itemsToShiftDown) {
+                    i.setOrderIndex(i.getOrderIndex() + 1);
+                }
+                itemRepository.saveAll(itemsToShiftDown);
+            }
+
+            item.setOrderIndex(newIndex);
+        }
+
+        List<ItemAllergens> currentAllergens = itemAllergensRepository.findAllByItems_Id(item.getId());
+
+        List<Long> currentIds = new ArrayList<>();
+        for (ItemAllergens ia : currentAllergens) {
+            currentIds.add(ia.getAllergens().getId());
+        }
+
+        List<Long> newIds = dto.getAllergensIds();
+
+        for (ItemAllergens ia : currentAllergens) {
+            if (!newIds.contains(ia.getAllergens().getId())) {
+                itemAllergensRepository.delete(ia);
+            }
+        }
+
+        for (Long id : newIds) {
+            if (!currentIds.contains(id)) {
+                Allergens allergen = allergensRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Allergen not found with id: " + id));
+
+                ItemAllergens newItemAllergen = new ItemAllergens();
+                newItemAllergen.setItems(item);
+                newItemAllergen.setAllergens(allergen);
+                itemAllergensRepository.save(newItemAllergen);
+            }
+        }
+
+        if (!item.getCategory().getId().equals(dto.getCategory())) {
+            Category oldCategory = item.getCategory();
+            Category newCategory = categoryRepository.findById(dto.getCategory()).orElseThrow(() -> new EntityNotFoundException("New category not found"));
+
+            List<Item> oldItemsToUpdate = itemRepository.findByCategoryAndOrderIndexGreaterThanOrderByOrderIndexAsc(
+                    oldCategory, item.getOrderIndex()
+            );
+            for (Item i : oldItemsToUpdate) {
+                i.setOrderIndex(i.getOrderIndex() - 1);
+            }
+            itemRepository.saveAll(oldItemsToUpdate);
+
+            Integer newIndex = dto.getOrderIndex();
+            if (newIndex == null) {
+                Integer maxOrder = itemRepository.findMaxOrderIndexByCategory(newCategory).orElse(0);
+                newIndex = maxOrder + 1;
+            } else {
+                List<Item> newItemsToShift = itemRepository.findByCategoryAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(
+                        newCategory, newIndex
+                );
+                for (Item i : newItemsToShift) {
+                    i.setOrderIndex(i.getOrderIndex() + 1);
+                }
+                itemRepository.saveAll(newItemsToShift);
+            }
+
+            item.setCategory(newCategory);
+            item.setOrderIndex(newIndex);
+
+            modelMapper.map(item, itemDto);
+        }
+        return itemDto;
+    }
+
 
     public CategoryWithItemsDto getCategoryWithSubcategories(Long categoryId) {
         Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new RuntimeException("Category not found"));
@@ -179,4 +292,23 @@ public class ItemService {
         }
         return response;
     }
+
+    public void changeAvailable(ItemChangeAvailableDto dto) {
+
+        Item item = itemRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Not found item"));
+
+        item.setAvailable(dto.getAvailable());
+        itemRepository.save(item);
+    }
+
+    private void updateIndexItem(Category category, Integer orderIndex) {
+        List<Item> itemsToShift = itemRepository.findByCategoryAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(category, orderIndex);
+
+        for (Item i : itemsToShift) {
+            i.setOrderIndex(i.getOrderIndex() + 1);
+        }
+
+        itemRepository.saveAll(itemsToShift);
+    }
+
 }

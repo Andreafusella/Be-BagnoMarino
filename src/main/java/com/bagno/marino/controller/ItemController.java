@@ -1,8 +1,10 @@
 package com.bagno.marino.controller;
 
 import com.bagno.marino.model.category.CategoryWithItemsDto;
+import com.bagno.marino.model.item.ItemChangeAvailableDto;
 import com.bagno.marino.model.item.ItemCreateDto;
 import com.bagno.marino.model.item.ItemDto;
+import com.bagno.marino.model.item.ItemUpdateDto;
 import com.bagno.marino.service.ItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,11 +30,12 @@ public class ItemController {
         return ResponseEntity.ok(response);
     }
 
-//    @GetMapping()
-//    public ResponseEntity<?> getAll() {
-//        List<CategoryDtoTest> response = itemService.getAll();
-//        return ResponseEntity.ok(response);
-//    }
+    @PutMapping()
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> update(@RequestBody ItemUpdateDto data) {
+        itemService.update(data);
+        return ResponseEntity.ok().build();
+    }
 
     @GetMapping()
     @PreAuthorize("hasRole('ADMIN')")
@@ -48,7 +51,14 @@ public class ItemController {
     }
 
     @GetMapping("/categories/{id}")
-    public ResponseEntity<CategoryWithItemsDto> getCategoryWithSubItems(@PathVariable Long id) {
+    public ResponseEntity<?> getCategoryWithSubItems(@PathVariable Long id) {
         return ResponseEntity.ok(itemService.getCategoryWithSubcategories(id));
+    }
+
+    @PutMapping("/available")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> changeAvailable(@RequestBody ItemChangeAvailableDto dto) {
+        itemService.changeAvailable(dto);
+        return ResponseEntity.ok().build();
     }
 }

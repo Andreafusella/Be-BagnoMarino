@@ -31,4 +31,7 @@ public interface CategoryRepository extends BaseRepository<Category, Long>{
 
     List<Category> findAllByOrderByOrderIndexAsc();
 
+    Category findByParentId(Long subCategoryId);
+
+    List<Category> findAllByParentIdIsNullOrderByOrderIndexAsc();
 }

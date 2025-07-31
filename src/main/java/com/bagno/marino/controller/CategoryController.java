@@ -1,6 +1,7 @@
 package com.bagno.marino.controller;
 
 import com.bagno.marino.model.category.CategoryCreateDto;
+import com.bagno.marino.model.category.CategoryUpdateDto;
 import com.bagno.marino.model.category.CategoryWithItemsDto;
 import com.bagno.marino.service.CategoryService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,13 @@ public class CategoryController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> delete(@PathVariable("categoryId") Long categoryId) {
         categoryService.delete(categoryId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping()
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> update(@RequestBody CategoryUpdateDto dto) {
+        categoryService.update(dto);
         return ResponseEntity.ok().build();
     }
 

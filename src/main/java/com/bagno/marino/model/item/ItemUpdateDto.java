@@ -1,28 +1,22 @@
 package com.bagno.marino.model.item;
 
-import com.bagno.marino.model.category.Category;
-import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-@Entity
+import java.util.List;
+
 @Getter
 @Setter
-public class Item {
+public class ItemUpdateDto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
     private String name;
     private String description;
     private Double price;
-    private Integer orderIndex;
+    private Long category;
     private Boolean available;
     private Boolean special;
     private Boolean frozen;
-
-
-    @ManyToOne
-    private Category category;
+    private Integer orderIndex;
+    List<Long> allergensIds;
 }
