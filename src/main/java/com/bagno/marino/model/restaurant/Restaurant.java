@@ -18,7 +18,9 @@ public class Restaurant {
     private String description;
     private String address;
     private String phone;
-    private String openingHours;
+    private String openingTime;
+    private String closingTime;
+    private String email;
 
     @OneToOne
     private Admin admin;

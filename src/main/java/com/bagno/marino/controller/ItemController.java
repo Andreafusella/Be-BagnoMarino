@@ -1,10 +1,7 @@
 package com.bagno.marino.controller;
 
 import com.bagno.marino.model.category.CategoryWithItemsDto;
-import com.bagno.marino.model.item.ItemChangeAvailableDto;
-import com.bagno.marino.model.item.ItemCreateDto;
-import com.bagno.marino.model.item.ItemDto;
-import com.bagno.marino.model.item.ItemUpdateDto;
+import com.bagno.marino.model.item.*;
 import com.bagno.marino.service.ItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +56,13 @@ public class ItemController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> changeAvailable(@RequestBody ItemChangeAvailableDto dto) {
         itemService.changeAvailable(dto);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/position")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updatePosition(@RequestBody List<ItemUpdatePositionDto> dto) {
+        itemService.updatePosition(dto);
         return ResponseEntity.ok().build();
     }
 }

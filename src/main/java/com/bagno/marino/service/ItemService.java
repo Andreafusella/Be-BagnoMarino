@@ -301,6 +301,15 @@ public class ItemService {
         itemRepository.save(item);
     }
 
+    public void updatePosition(List<ItemUpdatePositionDto> dto) {
+        for (ItemUpdatePositionDto i : dto) {
+            Item item = itemRepository.findById(i.getId()).orElseThrow(() -> new EntityNotFoundException("Not found item"));
+
+            item.setOrderIndex(i.getOrderIndex());
+            itemRepository.save(item);
+        }
+    }
+
     private void updateIndexItem(Category category, Integer orderIndex) {
         List<Item> itemsToShift = itemRepository.findByCategoryAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(category, orderIndex);
 

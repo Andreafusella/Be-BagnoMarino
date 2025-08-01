@@ -33,23 +33,23 @@ public class RestaurantService {
     @Autowired
     private ModelMapper modelMapper;
 
-    private void validateCreateDto(RestaurantCreateDto dto) {
-        getAndCheckTokenAdmin();
-        if (dto.getName() == null || dto.getName().isBlank()) throw new IllegalArgumentException("Il nome del ristorante è obbligatorio.");
-        if (dto.getName().length() > 100) throw new IllegalArgumentException("Il nome del ristorante non può superare i 100 caratteri.");
-
-        if (dto.getDescription() == null || dto.getDescription().isBlank()) throw new IllegalArgumentException("La descrizione è obbligatoria.");
-        if (dto.getDescription().length() > 300) throw new IllegalArgumentException("La descrizione non può superare i 300 caratteri.");
-
-        if (dto.getAddress() == null || dto.getAddress().isBlank()) throw new IllegalArgumentException("L'indirizzo è obbligatorio.");
-        if (dto.getAddress().length() > 200) throw new IllegalArgumentException("L'indirizzo non può superare i 200 caratteri.");
-
-        if (dto.getPhone() == null || dto.getPhone().isBlank()) throw new IllegalArgumentException("Il numero di telefono è obbligatorio.");
-        if (!dto.getPhone().matches("^\\+?[0-9 ]{7,20}$")) throw new IllegalArgumentException("Il numero di telefono non è valido.");
-
-        if (dto.getOpeningHours() == null || dto.getOpeningHours().isBlank()) throw new IllegalArgumentException("L'orario di apertura è obbligatorio.");
-        if (dto.getOpeningHours().length() > 200) throw new IllegalArgumentException("L'orario di apertura non può superare i 200 caratteri.");
-    }
+//    private void validateCreateDto(RestaurantCreateDto dto) {
+//        getAndCheckTokenAdmin();
+//        if (dto.getName() == null || dto.getName().isBlank()) throw new IllegalArgumentException("Il nome del ristorante è obbligatorio.");
+//        if (dto.getName().length() > 100) throw new IllegalArgumentException("Il nome del ristorante non può superare i 100 caratteri.");
+//
+//        if (dto.getDescription() == null || dto.getDescription().isBlank()) throw new IllegalArgumentException("La descrizione è obbligatoria.");
+//        if (dto.getDescription().length() > 300) throw new IllegalArgumentException("La descrizione non può superare i 300 caratteri.");
+//
+//        if (dto.getAddress() == null || dto.getAddress().isBlank()) throw new IllegalArgumentException("L'indirizzo è obbligatorio.");
+//        if (dto.getAddress().length() > 200) throw new IllegalArgumentException("L'indirizzo non può superare i 200 caratteri.");
+//
+//        if (dto.getPhone() == null || dto.getPhone().isBlank()) throw new IllegalArgumentException("Il numero di telefono è obbligatorio.");
+//        if (!dto.getPhone().matches("^\\+?[0-9 ]{7,20}$")) throw new IllegalArgumentException("Il numero di telefono non è valido.");
+//
+//        if (dto.getOpeningHours() == null || dto.getOpeningHours().isBlank()) throw new IllegalArgumentException("L'orario di apertura è obbligatorio.");
+//        if (dto.getOpeningHours().length() > 200) throw new IllegalArgumentException("L'orario di apertura non può superare i 200 caratteri.");
+//    }
 
     private void validateUpdateDto(RestaurantUpdateDto dto) {
         getAndCheckTokenAdmin();
@@ -74,30 +74,31 @@ public class RestaurantService {
             if (!dto.getPhone().matches("^\\+?[0-9 ]{7,20}$")) throw new IllegalArgumentException("Il numero di telefono non è valido.");
         }
 
-        if (dto.getOpeningHours() != null) {
-            if (dto.getOpeningHours().isBlank()) throw new IllegalArgumentException("L'orario di apertura non può essere vuoto.");
-            if (dto.getOpeningHours().length() > 200) throw new IllegalArgumentException("L'orario di apertura non può superare i 200 caratteri.");
+        if (dto.getEmail() != null) {
+            if (dto.getEmail().isBlank()) throw new IllegalArgumentException("L'email non può essere vuota");
+            String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+            if (!dto.getEmail().matches(emailRegex)) throw new IllegalArgumentException("L'email non è valida");
         }
     }
 
-    public void save(RestaurantCreateDto data) {
-
-        validateCreateDto(data);
-
-        Integer adminId = jwtService.getCurrentAdminId();
-        Admin admin = adminRepository.findById(adminId).get();
-
-        Restaurant restaurant = new Restaurant();
-        restaurant.setName(data.getName());
-        restaurant.setDescription(data.getDescription());
-        restaurant.setAddress(data.getAddress());
-        restaurant.setPhone(data.getPhone());
-        restaurant.setOpeningHours(data.getOpeningHours());
-        restaurant.setAdmin(admin);
-
-        restaurantRepository.save(restaurant);
-
-    }
+//    public void save(RestaurantCreateDto data) {
+//
+//        validateCreateDto(data);
+//
+//        Integer adminId = jwtService.getCurrentAdminId();
+//        Admin admin = adminRepository.findById(adminId).get();
+//
+//        Restaurant restaurant = new Restaurant();
+//        restaurant.setName(data.getName());
+//        restaurant.setDescription(data.getDescription());
+//        restaurant.setAddress(data.getAddress());
+//        restaurant.setPhone(data.getPhone());
+//        restaurant.setOpeningHours(data.getOpeningHours());
+//        restaurant.setAdmin(admin);
+//
+//        restaurantRepository.save(restaurant);
+//
+//    }
 
     public void update(RestaurantUpdateDto data) {
 
@@ -111,7 +112,9 @@ public class RestaurantService {
         if (data.getDescription() != null) restaurant.setDescription(data.getDescription());
         if (data.getAddress() != null) restaurant.setAddress(data.getAddress());
         if (data.getPhone() != null) restaurant.setPhone(data.getPhone());
-        if (data.getOpeningHours() != null) restaurant.setOpeningHours(data.getOpeningHours());
+        if (data.getOpeningTime() != null) restaurant.setOpeningTime(data.getOpeningTime());
+        if (data.getClosingTime() != null) restaurant.setClosingTime(data.getClosingTime());
+        if (data.getEmail() != null) restaurant.setEmail(data.getEmail());
 
         restaurantRepository.save(restaurant);
     }
