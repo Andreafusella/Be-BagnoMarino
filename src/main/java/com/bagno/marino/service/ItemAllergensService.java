@@ -62,4 +62,9 @@ public class ItemAllergensService {
         return list;
     }
 
+    public void deleteAllItemAllergensByItem(Item item) {
+        List<ItemAllergens> itemAllergens = itemAllergensRepository.findAllByItems_Id(item.getId());
+        itemAllergensRepository.deleteAll(itemAllergens);
+    }
+
 }

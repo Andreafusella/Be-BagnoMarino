@@ -65,4 +65,10 @@ public class ItemController {
         itemService.updatePosition(dto);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(itemService.getById(id));
+    }
 }

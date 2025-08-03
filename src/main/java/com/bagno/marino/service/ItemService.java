@@ -4,7 +4,6 @@ import com.bagno.marino.exception.general.BadRequestException;
 import com.bagno.marino.exception.general.EntityNotFoundException;
 import com.bagno.marino.exception.general.IllegalArgumentException;
 import com.bagno.marino.model.allergens.Allergens;
-import com.bagno.marino.model.allergens.AllergensDto;
 import com.bagno.marino.model.category.Category;
 import com.bagno.marino.model.category.CategoryWithItemsDto;
 import com.bagno.marino.model.item.*;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ItemService {
@@ -47,8 +47,9 @@ public class ItemService {
         String normalizedTitle = dto.getName().toLowerCase();
         if (itemRepository.existsByNormalizedTitle(normalizedTitle)) throw new BadRequestException("Title already exists");
 
+        if (dto.getName().length() > 40) throw new IllegalArgumentException("Il nome puo contenere massimo 40 caratteri");
         if (!categoryRepository.existsById(dto.getCategory())) throw new BadRequestException("Category does not exist");
-        if (dto.getDescription() != null && dto.getDescription().length() > 40) throw new IllegalArgumentException("Description length must be less than 40 characters");
+        if (dto.getDescription() != null && dto.getDescription().length() > 100) throw new IllegalArgumentException("Description length must be less than 100 characters");
         if (dto.getPrice() == null || dto.getPrice() < 0) throw new IllegalArgumentException("Price must be greater than 0");
         for (Long i : dto.getAllergensIds()) {
             if (!allergensRepository.existsById(i)) throw new BadRequestException("Allergen does not exist with id: " + i);
@@ -61,16 +62,35 @@ public class ItemService {
     }
 
     private void validateUpdate(ItemUpdateDto dto) {
-        String normalizedTitle = dto.getName().toLowerCase();
-        if (itemRepository.existsByNormalizedTitle(normalizedTitle)) throw new BadRequestException("Title already exists");
+        Item item = itemRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Item non trovato"));
 
-        if (!categoryRepository.existsById(dto.getCategory())) throw new BadRequestException("Category does not exist");
-        if (dto.getDescription() != null && dto.getDescription().length() > 40) throw new IllegalArgumentException("Description length must be less than 40 characters");
-        if (dto.getPrice() == null || dto.getPrice() < 0) throw new IllegalArgumentException("Price must be greater than 0");
-        for (Long i : dto.getAllergensIds()) {
-            if (!allergensRepository.existsById(i)) throw new BadRequestException("Allergen does not exist with id: " + i);
+        String normalizedTitle = dto.getName().toLowerCase();
+
+        Optional<Item> existingItem = itemRepository.findByNameIgnoreCase(normalizedTitle);
+        if (existingItem.isPresent() && !existingItem.get().getId().equals(dto.getId())) {
+            throw new BadRequestException("Esiste già un item con lo stesso nome");
         }
-        if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0) throw new IllegalArgumentException("Order index must be greater than 0");
+
+        if (dto.getName().length() > 40) throw new IllegalArgumentException("Il nome puo contenere massimo 40 caratteri");
+        if (!categoryRepository.existsById(dto.getCategory())) {
+            throw new BadRequestException("La categoria specificata non esiste");
+        }
+
+        if (dto.getDescription() != null && dto.getDescription().length() > 100) {
+            throw new IllegalArgumentException("La descrizione deve avere al massimo 100 caratteri");
+        }
+        if (dto.getPrice() == null || dto.getPrice() <= 0) {
+            throw new IllegalArgumentException("Il prezzo deve essere maggiore di 0");
+        }
+        for (Long allergenId : dto.getAllergensIds()) {
+            if (!allergensRepository.existsById(allergenId)) {
+                throw new BadRequestException("Allergene non trovato con ID: " + allergenId);
+            }
+        }
+
+        if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0) {
+            throw new IllegalArgumentException("L'indice di ordinamento deve essere maggiore o uguale a 0");
+        }
     }
 
     @Transactional
@@ -120,7 +140,9 @@ public class ItemService {
         if (!dto.getName().equals(item.getName())) item.setName(dto.getName());
         if (!dto.getDescription().equals(item.getDescription())) item.setDescription(dto.getDescription());
         if (!dto.getPrice().equals(item.getPrice())) item.setPrice(dto.getPrice());
-        if (!dto.getAvailable().equals(item.getAvailable())) item.setAvailable(dto.getAvailable());
+        if (dto.getAvailable() != item.getAvailable()) {
+            item.setAvailable(dto.getAvailable());
+        }
         if (!dto.getSpecial().equals(item.getSpecial())) item.setSpecial(dto.getSpecial());
         if (!dto.getFrozen().equals(item.getFrozen())) item.setFrozen(dto.getFrozen());
         if (!dto.getOrderIndex().equals(item.getOrderIndex())) {
@@ -204,8 +226,10 @@ public class ItemService {
             item.setCategory(newCategory);
             item.setOrderIndex(newIndex);
 
+
             modelMapper.map(item, itemDto);
         }
+        itemRepository.save(item);
         return itemDto;
     }
 
@@ -256,7 +280,9 @@ public class ItemService {
 
         itemRepository.saveAll(itemsToUpdate);
 
-        itemRepository.deleteById(id);
+        itemAllergensService.deleteAllItemAllergensByItem(item);
+
+        itemRepository.delete(item);
     }
 
 
@@ -309,6 +335,23 @@ public class ItemService {
             itemRepository.save(item);
         }
     }
+
+    public ItemDto getById(Long id) {
+        Item item = itemRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found item"));
+
+        ItemDto itemDto = new ItemDto();
+        modelMapper.map(item, itemDto);
+        itemDto.setCategoryName(item.getCategory().getName());
+        itemDto.setAllergenes(itemAllergensService.getAllergensByItem(item));
+
+        return itemDto;
+    }
+
+    public void getInfoPlateCategory() {
+
+    }
+
+
 
     private void updateIndexItem(Category category, Integer orderIndex) {
         List<Item> itemsToShift = itemRepository.findByCategoryAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(category, orderIndex);

@@ -12,6 +12,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class RestaurantService {
 
@@ -127,6 +129,18 @@ public class RestaurantService {
         RestaurantDto restaurantDto = new RestaurantDto();
         modelMapper.map(restaurant, restaurantDto);
         return restaurantDto;
+    }
+
+    public RestaurantDto getInfoNotAdmin() {
+        List<Restaurant> restaurant = restaurantRepository.findAll();
+
+        RestaurantDto restaurantDto = new RestaurantDto();
+        for (Restaurant r : restaurant) {
+            modelMapper.map(r, restaurantDto);
+
+            return restaurantDto;
+        }
+        return null;
     }
 
     public RestaurantInfoItemCategoryDto getNumberItemAndCategory() {

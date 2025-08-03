@@ -32,4 +32,6 @@ public interface ItemRepository extends BaseRepository<Item, Long> {
     List<Item> findAllByCategory_IdOrderByOrderIndexAsc(Long id);
 
     List<Item> findByCategoryAndOrderIndexBetweenOrderByOrderIndexAsc(Category category, int i, int newIndex);
+
+    Optional<Item> findByNameIgnoreCase(String name);
 }

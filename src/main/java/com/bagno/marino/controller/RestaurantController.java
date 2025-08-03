@@ -38,4 +38,10 @@ public class RestaurantController {
     public ResponseEntity<?> getNumberItemAndCategory() {
         return ResponseEntity.ok(restaurantService.getNumberItemAndCategory());
     }
+
+    @GetMapping("/info")
+    public ResponseEntity<?> getInfoNotAdmin() {
+        RestaurantDto response = restaurantService.getInfoNotAdmin();
+        return ResponseEntity.ok().body(response);
+    }
 }

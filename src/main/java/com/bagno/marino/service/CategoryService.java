@@ -31,7 +31,7 @@ public class CategoryService {
 
     private void validateCreateDto(CategoryCreateDto dto) {
         if (categoryRepository.existsByName(dto.getName())) throw new BadRequestException("Category name already exists");
-        if (dto.getName() == null || dto.getName().length() > 30) throw new BadRequestException("Category name cannot be longer than 30 characters");
+        if (dto.getName() == null || dto.getName().length() > 100) throw new BadRequestException("Category name cannot be longer than 100 characters");
         if (dto.getSubCategoryId() != -1) {
             if (!categoryRepository.existsById(dto.getSubCategoryId())) throw new BadRequestException("Category does not exist");
         }
@@ -183,5 +183,25 @@ public class CategoryService {
             categoryDtos.add(categoryDto);
         }
         return categoryDtos;
+    }
+
+    public void updatePosition(List<CategoryUpdatePositionDto> dto) {
+        for (CategoryUpdatePositionDto c : dto) {
+            Category category = categoryRepository.findById(c.getId()).orElseThrow(() -> new EntityNotFoundException("Not found category"));
+
+            category.setOrderIndex(c.getOrderIndex());
+            categoryRepository.save(category);
+        }
+    }
+
+    public CategoryUpdateDto getCategoryById(Long id) {
+        Category category = categoryRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found category"));
+
+        CategoryUpdateDto categoryUpdateDto = new CategoryUpdateDto();
+
+        modelMapper.map(category, categoryUpdateDto);
+        categoryUpdateDto.setSubCategoryId(category.getParent().getId());
+
+        return categoryUpdateDto;
     }
 }
