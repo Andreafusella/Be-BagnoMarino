@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class CategoryService {
@@ -43,7 +44,14 @@ public class CategoryService {
     }
 
     private void validateUpdateDto(CategoryUpdateDto dto) {
-        if (categoryRepository.existsByName(dto.getName())) throw new BadRequestException("Category name already exists");
+        Category category = categoryRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Category not found"));
+
+        String normalizedName = category.getName().toLowerCase();
+
+        Optional<Category> existingCategory = categoryRepository.findByNameIgnoreCase(normalizedName);
+        if (existingCategory.isPresent() && !existingCategory.get().getId().equals(dto.getId())) {
+            throw new BadRequestException("Esiste già una categorua con lo stesso nome");
+        }
         if (dto.getName() == null || dto.getName().length() > 30) throw new BadRequestException("Category name cannot be longer than 30 characters");
         if (dto.getSubCategoryId() != -1) {
             if (!categoryRepository.existsById(dto.getSubCategoryId())) throw new BadRequestException("Category does not exist");
@@ -106,7 +114,7 @@ public class CategoryService {
         Category category = categoryRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Not found category"));
 
         Category oldParent = category.getParent();
-        Category newParent = categoryRepository.findById(dto.getSubCategoryId()).orElse(null); // può essere null
+        Category newParent = categoryRepository.findById(dto.getSubCategoryId()).orElse(null);
 
         boolean parentChanged = !Objects.equals(oldParent, newParent);
         boolean indexChanged = !category.getOrderIndex().equals(dto.getOrderIndex());
@@ -200,7 +208,9 @@ public class CategoryService {
         CategoryUpdateDto categoryUpdateDto = new CategoryUpdateDto();
 
         modelMapper.map(category, categoryUpdateDto);
-        categoryUpdateDto.setSubCategoryId(category.getParent().getId());
+        if (category.getParent() != null) {
+            categoryUpdateDto.setSubCategoryId(category.getParent().getId());
+        }
 
         return categoryUpdateDto;
     }

@@ -34,4 +34,6 @@ public interface CategoryRepository extends BaseRepository<Category, Long>{
     Category findByParentId(Long subCategoryId);
 
     List<Category> findAllByParentIdIsNullOrderByOrderIndexAsc();
+
+    Optional<Category> findByNameIgnoreCase(String normalizedName);
 }
