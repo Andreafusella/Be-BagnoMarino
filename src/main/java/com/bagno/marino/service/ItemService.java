@@ -44,8 +44,7 @@ public class ItemService {
     private ModelMapper modelMapper;
 
     private void validateCreateDto(ItemCreateDto dto) {
-        String normalizedTitle = dto.getName().toLowerCase();
-        if (itemRepository.existsByNormalizedTitle(normalizedTitle)) throw new BadRequestException("Title already exists");
+
 
         if (dto.getName().length() > 60) throw new IllegalArgumentException("Il nome puo contenere massimo 60 caratteri");
         if (!categoryRepository.existsById(dto.getCategory())) throw new BadRequestException("Category does not exist");
@@ -63,13 +62,6 @@ public class ItemService {
 
     private void validateUpdate(ItemUpdateDto dto) {
         Item item = itemRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Item non trovato"));
-
-        String normalizedTitle = dto.getName().toLowerCase();
-
-        Optional<Item> existingItem = itemRepository.findByNameIgnoreCase(normalizedTitle);
-        if (existingItem.isPresent() && !existingItem.get().getId().equals(dto.getId())) {
-            throw new BadRequestException("Esiste già un item con lo stesso nome");
-        }
 
         if (dto.getName().length() > 60) throw new IllegalArgumentException("Il nome puo contenere massimo 60 caratteri");
         if (!categoryRepository.existsById(dto.getCategory())) {
@@ -346,12 +338,6 @@ public class ItemService {
 
         return itemDto;
     }
-
-    public void getInfoPlateCategory() {
-
-    }
-
-
 
     private void updateIndexItem(Category category, Integer orderIndex) {
         List<Item> itemsToShift = itemRepository.findByCategoryAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(category, orderIndex);
