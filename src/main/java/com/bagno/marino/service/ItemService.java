@@ -47,9 +47,9 @@ public class ItemService {
         String normalizedTitle = dto.getName().toLowerCase();
         if (itemRepository.existsByNormalizedTitle(normalizedTitle)) throw new BadRequestException("Title already exists");
 
-        if (dto.getName().length() > 40) throw new IllegalArgumentException("Il nome puo contenere massimo 40 caratteri");
+        if (dto.getName().length() > 60) throw new IllegalArgumentException("Il nome puo contenere massimo 60 caratteri");
         if (!categoryRepository.existsById(dto.getCategory())) throw new BadRequestException("Category does not exist");
-        if (dto.getDescription() != null && dto.getDescription().length() > 100) throw new IllegalArgumentException("Description length must be less than 100 characters");
+        if (dto.getDescription() != null && dto.getDescription().length() > 130) throw new IllegalArgumentException("Description length must be less than 130 characters");
         if (dto.getPrice() == null || dto.getPrice() < 0) throw new IllegalArgumentException("Price must be greater than 0");
         for (Long i : dto.getAllergensIds()) {
             if (!allergensRepository.existsById(i)) throw new BadRequestException("Allergen does not exist with id: " + i);
@@ -71,13 +71,13 @@ public class ItemService {
             throw new BadRequestException("Esiste già un item con lo stesso nome");
         }
 
-        if (dto.getName().length() > 40) throw new IllegalArgumentException("Il nome puo contenere massimo 40 caratteri");
+        if (dto.getName().length() > 60) throw new IllegalArgumentException("Il nome puo contenere massimo 60 caratteri");
         if (!categoryRepository.existsById(dto.getCategory())) {
             throw new BadRequestException("La categoria specificata non esiste");
         }
 
-        if (dto.getDescription() != null && dto.getDescription().length() > 100) {
-            throw new IllegalArgumentException("La descrizione deve avere al massimo 100 caratteri");
+        if (dto.getDescription() != null && dto.getDescription().length() > 130) {
+            throw new IllegalArgumentException("La descrizione deve avere al massimo 130 caratteri");
         }
         if (dto.getPrice() == null || dto.getPrice() <= 0) {
             throw new IllegalArgumentException("Il prezzo deve essere maggiore di 0");
