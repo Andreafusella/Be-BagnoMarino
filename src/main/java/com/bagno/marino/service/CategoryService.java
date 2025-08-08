@@ -25,18 +25,24 @@ public class CategoryService {
     private CategoryRepository categoryRepository;
 
     @Autowired
+    private ItemRepository itemRepository;
+
+    @Autowired
     private ItemService itemService;
 
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private ItemAllergensService itemAllergensService;
+
     private void validateCreateDto(CategoryCreateDto dto) {
-        if (categoryRepository.existsByName(dto.getName())) throw new BadRequestException("Category name already exists");
-        if (dto.getName() == null || dto.getName().length() > 100) throw new BadRequestException("Category name cannot be longer than 100 characters");
+        if (categoryRepository.existsByName(dto.getName())) throw new BadRequestException("Il nome della categoria già esiste");
+        if (dto.getName() == null || dto.getName().length() > 100) throw new BadRequestException("Il nome della categoria non può essere lungo più di 100 caratteri");
         if (dto.getSubCategoryId() != -1) {
-            if (!categoryRepository.existsById(dto.getSubCategoryId())) throw new BadRequestException("Category does not exist");
+            if (!categoryRepository.existsById(dto.getSubCategoryId())) throw new BadRequestException("La categoria non esiste");
         }
-        if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0) throw new IllegalArgumentException("Order index must be greater than 0");
+        if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0) throw new IllegalArgumentException("L'indice dell'ordine deve essere uguale o maggiore di 0");
     }
 
     private void validateDeleteDto(Long id) {
@@ -44,7 +50,7 @@ public class CategoryService {
     }
 
     private void validateUpdateDto(CategoryUpdateDto dto) {
-        Category category = categoryRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Category not found"));
+        Category category = categoryRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Categoria non trovata"));
 
         String normalizedName = category.getName().toLowerCase();
 
@@ -52,11 +58,11 @@ public class CategoryService {
         if (existingCategory.isPresent() && !existingCategory.get().getId().equals(dto.getId())) {
             throw new BadRequestException("Esiste già una categorua con lo stesso nome");
         }
-        if (dto.getName() == null || dto.getName().length() > 30) throw new BadRequestException("Category name cannot be longer than 30 characters");
+        if (dto.getName() == null || dto.getName().length() > 100) throw new BadRequestException("Il nome della categoria non può essere lungo più di 100 caratteri");
         if (dto.getSubCategoryId() != -1) {
-            if (!categoryRepository.existsById(dto.getSubCategoryId())) throw new BadRequestException("Category does not exist");
+            if (!categoryRepository.existsById(dto.getSubCategoryId())) throw new BadRequestException("La categoria non esiste");
         }
-        if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0) throw new IllegalArgumentException("Order index must be greater than 0");
+        if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0) throw new IllegalArgumentException("L'indice dell'ordine deve essere uguale o maggiore di 0");
     }
 
     public void save(CategoryCreateDto dto) {
@@ -93,7 +99,13 @@ public class CategoryService {
     public void delete(Long id) {
         validateDeleteDto(id);
 
-        Category category = categoryRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Category not found"));
+        Category category = categoryRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Categoria non trovata"));
+
+        List<Item> items = itemRepository.findAllByCategory_Id(id);
+
+        for (Item item : items) {
+            itemAllergensService.deleteAllItemAllergensByItem(item);
+        }
 
         itemService.deleteAllByCategory(id);
 
@@ -111,7 +123,7 @@ public class CategoryService {
     public void update(CategoryUpdateDto dto) {
         validateUpdateDto(dto);
 
-        Category category = categoryRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Not found category"));
+        Category category = categoryRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Categoria non trovata"));
 
         Category oldParent = category.getParent();
         Category newParent = categoryRepository.findById(dto.getSubCategoryId()).orElse(null);
@@ -195,7 +207,7 @@ public class CategoryService {
 
     public void updatePosition(List<CategoryUpdatePositionDto> dto) {
         for (CategoryUpdatePositionDto c : dto) {
-            Category category = categoryRepository.findById(c.getId()).orElseThrow(() -> new EntityNotFoundException("Not found category"));
+            Category category = categoryRepository.findById(c.getId()).orElseThrow(() -> new EntityNotFoundException("Categoria non trovata"));
 
             category.setOrderIndex(c.getOrderIndex());
             categoryRepository.save(category);
@@ -203,7 +215,7 @@ public class CategoryService {
     }
 
     public CategoryUpdateDto getCategoryById(Long id) {
-        Category category = categoryRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Not found category"));
+        Category category = categoryRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Categoria non trovata"));
 
         CategoryUpdateDto categoryUpdateDto = new CategoryUpdateDto();
 

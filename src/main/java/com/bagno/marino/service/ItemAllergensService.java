@@ -30,9 +30,7 @@ public class ItemAllergensService {
     @Autowired
     private ModelMapper modelMapper;
 
-    private void validateCreateDto(ItemAllergensCreateDto dto) {
-        // per ora non serve
-    }
+    private void validateCreateDto(ItemAllergensCreateDto dto) {}
 
     public void create(ItemAllergensCreateDto dto) {
         validateCreateDto(dto);

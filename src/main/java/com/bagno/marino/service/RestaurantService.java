@@ -35,24 +35,6 @@ public class RestaurantService {
     @Autowired
     private ModelMapper modelMapper;
 
-//    private void validateCreateDto(RestaurantCreateDto dto) {
-//        getAndCheckTokenAdmin();
-//        if (dto.getName() == null || dto.getName().isBlank()) throw new IllegalArgumentException("Il nome del ristorante è obbligatorio.");
-//        if (dto.getName().length() > 100) throw new IllegalArgumentException("Il nome del ristorante non può superare i 100 caratteri.");
-//
-//        if (dto.getDescription() == null || dto.getDescription().isBlank()) throw new IllegalArgumentException("La descrizione è obbligatoria.");
-//        if (dto.getDescription().length() > 300) throw new IllegalArgumentException("La descrizione non può superare i 300 caratteri.");
-//
-//        if (dto.getAddress() == null || dto.getAddress().isBlank()) throw new IllegalArgumentException("L'indirizzo è obbligatorio.");
-//        if (dto.getAddress().length() > 200) throw new IllegalArgumentException("L'indirizzo non può superare i 200 caratteri.");
-//
-//        if (dto.getPhone() == null || dto.getPhone().isBlank()) throw new IllegalArgumentException("Il numero di telefono è obbligatorio.");
-//        if (!dto.getPhone().matches("^\\+?[0-9 ]{7,20}$")) throw new IllegalArgumentException("Il numero di telefono non è valido.");
-//
-//        if (dto.getOpeningHours() == null || dto.getOpeningHours().isBlank()) throw new IllegalArgumentException("L'orario di apertura è obbligatorio.");
-//        if (dto.getOpeningHours().length() > 200) throw new IllegalArgumentException("L'orario di apertura non può superare i 200 caratteri.");
-//    }
-
     private void validateUpdateDto(RestaurantUpdateDto dto) {
         getAndCheckTokenAdmin();
 
@@ -83,32 +65,13 @@ public class RestaurantService {
         }
     }
 
-//    public void save(RestaurantCreateDto data) {
-//
-//        validateCreateDto(data);
-//
-//        Integer adminId = jwtService.getCurrentAdminId();
-//        Admin admin = adminRepository.findById(adminId).get();
-//
-//        Restaurant restaurant = new Restaurant();
-//        restaurant.setName(data.getName());
-//        restaurant.setDescription(data.getDescription());
-//        restaurant.setAddress(data.getAddress());
-//        restaurant.setPhone(data.getPhone());
-//        restaurant.setOpeningHours(data.getOpeningHours());
-//        restaurant.setAdmin(admin);
-//
-//        restaurantRepository.save(restaurant);
-//
-//    }
-
     public void update(RestaurantUpdateDto data) {
 
         validateUpdateDto(data);
 
         Integer adminId = getAndCheckTokenAdmin();
 
-        Restaurant restaurant = restaurantRepository.findByAdmin_Id(adminId).orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+        Restaurant restaurant = restaurantRepository.findByAdmin_Id(adminId).orElseThrow(() -> new EntityNotFoundException("Ristorante non trovato"));
 
         if (data.getName() != null) restaurant.setName(data.getName());
         if (data.getDescription() != null) restaurant.setDescription(data.getDescription());
@@ -124,7 +87,7 @@ public class RestaurantService {
     public RestaurantDto getInfo() {
         Integer adminId = getAndCheckTokenAdmin();
 
-        Restaurant restaurant = restaurantRepository.findByAdmin_Id(adminId).orElseThrow(() -> new EntityNotFoundException("Restaurant not found"));
+        Restaurant restaurant = restaurantRepository.findByAdmin_Id(adminId).orElseThrow(() -> new EntityNotFoundException("Ristorante non trovato"));
 
         RestaurantDto restaurantDto = new RestaurantDto();
         modelMapper.map(restaurant, restaurantDto);
@@ -160,7 +123,7 @@ public class RestaurantService {
 
     private Integer getAndCheckTokenAdmin() {
         Integer adminId = jwtService.getCurrentAdminId();
-        if (adminId == null || !adminRepository.existsById(adminId)) throw new EntityNotFoundException("Error during request");
+        if (adminId == null || !adminRepository.existsById(adminId)) throw new EntityNotFoundException("Errore durante la richiesta");
 
         return adminId;
     }

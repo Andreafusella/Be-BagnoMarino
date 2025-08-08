@@ -47,13 +47,13 @@ public class ItemService {
 
 
         if (dto.getName().length() > 60) throw new IllegalArgumentException("Il nome puo contenere massimo 60 caratteri");
-        if (!categoryRepository.existsById(dto.getCategory())) throw new BadRequestException("Category does not exist");
-        if (dto.getDescription() != null && dto.getDescription().length() > 130) throw new IllegalArgumentException("Description length must be less than 130 characters");
-        if (dto.getPrice() == null || dto.getPrice() < 0) throw new IllegalArgumentException("Price must be greater than 0");
+        if (!categoryRepository.existsById(dto.getCategory())) throw new BadRequestException("La categoria non esiste");
+        if (dto.getDescription() != null && dto.getDescription().length() > 130) throw new IllegalArgumentException("La descrizione non può contenere al massimo 130 caratteri");
+        if (dto.getPrice() == null || dto.getPrice() < 0) throw new IllegalArgumentException("Il prezzo deve essere maggiore di 0");
         for (Long i : dto.getAllergensIds()) {
-            if (!allergensRepository.existsById(i)) throw new BadRequestException("Allergen does not exist with id: " + i);
+            if (!allergensRepository.existsById(i)) throw new BadRequestException("L'allergene non esiste con id: " + i);
         }
-        if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0) throw new IllegalArgumentException("Order index must be greater than 0");
+        if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0) throw new IllegalArgumentException("L'indice dell'ordine deve essere uguale o maggiore di 0");
     }
 
     private void validateDelete(Long id) {
@@ -92,14 +92,16 @@ public class ItemService {
         Category category = categoryRepository.findById(dto.getCategory()).get();
 
         Integer orderIndex = dto.getOrderIndex();
+        Integer maxOrder = itemRepository.findMaxOrderIndexByCategory(category).orElse(0);
 
         if (orderIndex == null) {
-            Integer maxOrder = itemRepository.findMaxOrderIndexByCategory(category).orElse(0);
             orderIndex = maxOrder + 1;
         } else {
-
-            //se mette 100 e gli item sono 5 deve impostare 6 e non 100
-            updateIndexItem(category, orderIndex);
+            if (orderIndex > maxOrder + 1) {
+                orderIndex = maxOrder + 1;
+            } else {
+                updateIndexItem(category, orderIndex);
+            }
         }
 
         Item item = new Item();
