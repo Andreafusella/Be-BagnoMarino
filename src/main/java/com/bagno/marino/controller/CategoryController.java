@@ -68,6 +68,4 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategoryById(categoryId));
     }
 
-    public void test() {}
-
 }
