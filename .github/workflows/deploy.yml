@@ -17,7 +17,7 @@ jobs:
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin
 
       - name: Build Docker image
-        run: docker build -t bagnomarinochalet1/bagnomarino-backend:latest .
+        run: docker build --platform linux/amd64 -t bagnomarinochalet1/bagnomarino-backend:latest .
 
       - name: Push Docker image
         run: docker push bagnomarinochalet1/bagnomarino-backend:latest
