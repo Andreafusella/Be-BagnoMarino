@@ -11,9 +11,6 @@ import java.util.Optional;
 @Repository
 public interface ItemRepository extends BaseRepository<Item, Long> {
 
-    @Query("SELECT COUNT(i) > 0 FROM Item i WHERE LOWER(i.name) = LOWER(:title)")
-    boolean existsByNormalizedTitle(@Param("title") String title);
-
     List<Item> findAllByCategory_Id(Long categoryId);
 
     List<Item> findAllByCategory_IdAndAvailableTrueOrderByOrderIndexAsc(Long categoryId);
@@ -33,5 +30,4 @@ public interface ItemRepository extends BaseRepository<Item, Long> {
 
     List<Item> findByCategoryAndOrderIndexBetweenOrderByOrderIndexAsc(Category category, int i, int newIndex);
 
-    Optional<Item> findByNameIgnoreCase(String name);
 }

@@ -120,61 +120,79 @@ public class CategoryService {
         categoryRepository.deleteById(id);
     }
 
+    @Transactional
     public void update(CategoryUpdateDto dto) {
         validateUpdateDto(dto);
 
-        Category category = categoryRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Categoria non trovata"));
+        Category category = categoryRepository.findById(dto.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Categoria non trovata"));
 
         Category oldParent = category.getParent();
-        Category newParent = categoryRepository.findById(dto.getSubCategoryId()).orElse(null);
+        Category newParent = (dto.getSubCategoryId() != -1)
+                ? categoryRepository.findById(dto.getSubCategoryId()).orElse(null)
+                : null;
+
+        Integer oldIndex = category.getOrderIndex();
+        Integer newIndex = dto.getOrderIndex() != null ? dto.getOrderIndex() : oldIndex;
 
         boolean parentChanged = !Objects.equals(oldParent, newParent);
-        boolean indexChanged = !category.getOrderIndex().equals(dto.getOrderIndex());
+        boolean indexChanged = !oldIndex.equals(newIndex);
 
-        if (parentChanged && oldParent != null) {
-            List<Category> oldSiblings = categoryRepository.findAllByParentIdOrderByOrderIndexAsc(oldParent.getId());
+        if (parentChanged) {
+            List<Category> oldSiblings = oldParent == null
+                    ? categoryRepository.findByParentIsNullAndOrderIndexGreaterThanOrderByOrderIndexAsc(oldIndex)
+                    : categoryRepository.findByParentIdAndOrderIndexGreaterThanOrderByOrderIndexAsc(oldParent.getId(), oldIndex);
+
             for (Category sibling : oldSiblings) {
-                if (sibling.getOrderIndex() > category.getOrderIndex()) {
-                    sibling.setOrderIndex(sibling.getOrderIndex() - 1);
-                }
+                sibling.setOrderIndex(sibling.getOrderIndex() - 1);
             }
             categoryRepository.saveAll(oldSiblings);
-        }
 
-        if (parentChanged || indexChanged) {
             List<Category> newSiblings = newParent == null
-                    ? categoryRepository.findAllByParentIdIsNullOrderByOrderIndexAsc()
-                    : categoryRepository.findAllByParentIdOrderByOrderIndexAsc(newParent.getId());
-
-            int newIndex = dto.getOrderIndex();
-
-            if (newIndex > newSiblings.size()) {
-                newIndex = newSiblings.size();
-            }
+                    ? categoryRepository.findByParentIsNullAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(newIndex)
+                    : categoryRepository.findByParentIdAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(newParent.getId(), newIndex);
 
             for (Category sibling : newSiblings) {
-                if (parentChanged || sibling.getId() != category.getId()) {
-                    if (sibling.getOrderIndex() >= newIndex) {
+                sibling.setOrderIndex(sibling.getOrderIndex() + 1);
+            }
+            categoryRepository.saveAll(newSiblings);
+
+            category.setParent(newParent);
+            category.setOrderIndex(newIndex);
+            categoryRepository.save(category);
+
+        } else if (indexChanged) {
+
+            List<Category> siblings = newParent == null
+                    ? categoryRepository.findByParentIsNullOrderByOrderIndexAsc()
+                    : categoryRepository.findByParentIdOrderByOrderIndexAsc(newParent.getId());
+
+            if (newIndex > oldIndex) {
+                for (Category sibling : siblings) {
+                    if (!sibling.getId().equals(category.getId())
+                            && sibling.getOrderIndex() > oldIndex
+                            && sibling.getOrderIndex() <= newIndex) {
+                        sibling.setOrderIndex(sibling.getOrderIndex() - 1);
+                    }
+                }
+            } else {
+                for (Category sibling : siblings) {
+                    if (!sibling.getId().equals(category.getId())
+                            && sibling.getOrderIndex() >= newIndex
+                            && sibling.getOrderIndex() < oldIndex) {
                         sibling.setOrderIndex(sibling.getOrderIndex() + 1);
                     }
                 }
             }
 
-            categoryRepository.saveAll(newSiblings);
+            categoryRepository.saveAll(siblings);
+
             category.setOrderIndex(newIndex);
+            categoryRepository.save(category);
         }
 
-        if (!category.getName().equals(dto.getName())) {
-            category.setName(dto.getName());
-        }
-
-        if (!category.getIcon().equals(dto.getIcon())) {
-            category.setIcon(dto.getIcon());
-        }
-
-        if (parentChanged) {
-            category.setParent(newParent);
-        }
+        category.setName(dto.getName());
+        category.setIcon(dto.getIcon());
 
         categoryRepository.save(category);
     }

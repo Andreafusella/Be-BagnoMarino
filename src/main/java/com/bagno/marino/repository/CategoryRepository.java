@@ -10,15 +10,11 @@ import java.util.Optional;
 @Repository
 public interface CategoryRepository extends BaseRepository<Category, Long>{
 
-    Category findByName(String name);
-
     boolean existsByName(String name);
 
     List<Category> findAllByParentIdOrderByOrderIndexAsc(Long categoryId);
 
     List<Category> findByParentIsNullOrderByOrderIndexAsc();
-
-    boolean existsByParent_Id(Long parentId);
 
     @Query("SELECT MAX(c.orderIndex) FROM Category c")
     Optional<Integer> findMaxOrderIndex();
@@ -31,9 +27,16 @@ public interface CategoryRepository extends BaseRepository<Category, Long>{
 
     List<Category> findAllByOrderByOrderIndexAsc();
 
-    Category findByParentId(Long subCategoryId);
-
-    List<Category> findAllByParentIdIsNullOrderByOrderIndexAsc();
-
     Optional<Category> findByNameIgnoreCase(String normalizedName);
+
+
+    List<Category> findByParentIsNullAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(Integer orderIndex);
+
+    List<Category> findByParentIdAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(Long id, Integer orderIndex);
+
+    List<Category> findByParentIdOrderByOrderIndexAsc(Long id);
+
+    List<Category> findByParentIsNullAndOrderIndexGreaterThanOrderByOrderIndexAsc(Integer oldIndex);
+
+    List<Category> findByParentIdAndOrderIndexGreaterThanOrderByOrderIndexAsc(Long id, Integer oldIndex);
 }
