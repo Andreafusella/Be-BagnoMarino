@@ -5,7 +5,6 @@ import com.bagno.marino.exception.general.EntityNotFoundException;
 import com.bagno.marino.exception.general.IllegalArgumentException;
 import com.bagno.marino.model.category.*;
 import com.bagno.marino.model.item.Item;
-import com.bagno.marino.model.item.ItemDto;
 import com.bagno.marino.repository.CategoryRepository;
 import com.bagno.marino.repository.ItemRepository;
 import jakarta.transaction.Transactional;
@@ -68,18 +67,34 @@ public class CategoryService {
     public void save(CategoryCreateDto dto) {
         validateCreateDto(dto);
 
-        List<Category> categoriesToShift = categoryRepository.findByOrderIndexGreaterThanEqualOrderByOrderIndexAsc(dto.getOrderIndex());
+        Category parent = null;
+        if (dto.getSubCategoryId() != -1) {
+            parent = categoryRepository.findById(dto.getSubCategoryId())
+                    .orElseThrow(() -> new EntityNotFoundException("Parent category not found"));
+        }
 
-        Integer orderIndex = dto.getOrderIndex();
-
-        if (orderIndex == null) {
-            Integer maxOrder = categoryRepository.findMaxOrderIndex().orElse(0);
+        Integer orderIndex;
+        if (dto.getOrderIndex() == null) {
+            Integer maxOrder;
+            if (parent == null) {
+                maxOrder = categoryRepository.findMaxOrderIndexByParentIsNull().orElse(0);
+            } else {
+                maxOrder = categoryRepository.findMaxOrderIndexByParent(parent).orElse(0);
+            }
             orderIndex = maxOrder + 1;
         } else {
+            orderIndex = dto.getOrderIndex();
+
+            List<Category> categoriesToShift;
+            if (parent == null) {
+                categoriesToShift = categoryRepository.findByParentIsNullAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(orderIndex);
+            } else {
+                categoriesToShift = categoryRepository.findByParentAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(parent, orderIndex);
+            }
+
             for (Category c : categoriesToShift) {
                 c.setOrderIndex(c.getOrderIndex() + 1);
             }
-
             categoryRepository.saveAll(categoriesToShift);
         }
 
@@ -87,37 +102,44 @@ public class CategoryService {
         category.setName(dto.getName());
         category.setIcon(dto.getIcon());
         category.setOrderIndex(orderIndex);
-
-        if (dto.getSubCategoryId() != -1) {
-            category.setParent(categoryRepository.findById(dto.getSubCategoryId()).orElse(null));
-        }
+        category.setParent(parent);
 
         categoryRepository.save(category);
     }
 
     @Transactional
     public void delete(Long id) {
-        validateDeleteDto(id);
-
         Category category = categoryRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Categoria non trovata"));
 
-        List<Item> items = itemRepository.findAllByCategory_Id(id);
+        deleteSubcategoriesRecursively(category);
 
+        List<Item> items = itemRepository.findAllByCategory_Id(id);
         for (Item item : items) {
             itemAllergensService.deleteAllItemAllergensByItem(item);
         }
-
         itemService.deleteAllByCategory(id);
 
         List<Category> categoriesToUpdate = categoryRepository.findByParentAndOrderIndexGreaterThanOrderByOrderIndexAsc(category.getParent(), category.getOrderIndex());
-
         for (Category c : categoriesToUpdate) {
             c.setOrderIndex(c.getOrderIndex() - 1);
         }
-
         categoryRepository.saveAll(categoriesToUpdate);
 
-        categoryRepository.deleteById(id);
+        categoryRepository.delete(category);
+    }
+
+    private void deleteSubcategoriesRecursively(Category category) {
+        for (Category sub : category.getSubcategories()) {
+            deleteSubcategoriesRecursively(sub);
+
+            List<Item> items = itemRepository.findAllByCategory_Id(sub.getId());
+            for (Item item : items) {
+                itemAllergensService.deleteAllItemAllergensByItem(item);
+            }
+            itemService.deleteAllByCategory(sub.getId());
+
+            categoryRepository.delete(sub);
+        }
     }
 
     @Transactional

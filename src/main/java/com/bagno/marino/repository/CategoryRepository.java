@@ -2,6 +2,7 @@ package com.bagno.marino.repository;
 
 import com.bagno.marino.model.category.Category;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,19 +17,11 @@ public interface CategoryRepository extends BaseRepository<Category, Long>{
 
     List<Category> findByParentIsNullOrderByOrderIndexAsc();
 
-    @Query("SELECT MAX(c.orderIndex) FROM Category c")
-    Optional<Integer> findMaxOrderIndex();
-
-    List<Category> findByOrderIndexGreaterThanEqualOrderByOrderIndexAsc(Integer orderIndex);
-
-    List<Category> findAllByParentId(Long categoryId);
-
     List<Category> findByParentAndOrderIndexGreaterThanOrderByOrderIndexAsc(Category parent, Integer orderIndex);
 
     List<Category> findAllByOrderByOrderIndexAsc();
 
     Optional<Category> findByNameIgnoreCase(String normalizedName);
-
 
     List<Category> findByParentIsNullAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(Integer orderIndex);
 
@@ -39,4 +32,12 @@ public interface CategoryRepository extends BaseRepository<Category, Long>{
     List<Category> findByParentIsNullAndOrderIndexGreaterThanOrderByOrderIndexAsc(Integer oldIndex);
 
     List<Category> findByParentIdAndOrderIndexGreaterThanOrderByOrderIndexAsc(Long id, Integer oldIndex);
+
+    @Query("SELECT MAX(c.orderIndex) FROM Category c WHERE c.parent IS NULL")
+    Optional<Integer> findMaxOrderIndexByParentIsNull();
+
+    @Query("SELECT MAX(c.orderIndex) FROM Category c WHERE c.parent = :parent")
+    Optional<Integer> findMaxOrderIndexByParent(@Param("parent") Category parent);
+
+    List<Category> findByParentAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(Category parent, Integer orderIndex);
 }

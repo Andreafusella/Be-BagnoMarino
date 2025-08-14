@@ -56,9 +56,7 @@ public class ItemService {
         if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0) throw new IllegalArgumentException("L'indice dell'ordine deve essere uguale o maggiore di 0");
     }
 
-    private void validateDelete(Long id) {
-
-    }
+    private void validateDelete(Long id) {}
 
     private void validateUpdate(ItemUpdateDto dto) {
         Item item = itemRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Item non trovato"));
@@ -85,8 +83,51 @@ public class ItemService {
         }
     }
 
-    @Transactional
     public ItemDto save(ItemCreateDto dto) {
+        validateCreateDto(dto);
+
+        Category category = categoryRepository.findById(dto.getCategory()).orElseThrow(() -> new EntityNotFoundException("Categoria non trovata"));
+
+        Integer maxOrder = itemRepository.findMaxOrderIndexByCategory(category).orElse(0);
+        Integer orderIndex;
+
+        if (dto.getOrderIndex() != null) {
+            if (dto.getOrderIndex() > maxOrder) {
+                orderIndex = maxOrder + 1;
+            } else {
+                List<Item> items = itemRepository.findAllByCategory_IdAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(category.getId(), dto.getOrderIndex());
+                for (Item i : items) {
+                    i.setOrderIndex(i.getOrderIndex() + 1);
+                }
+                itemRepository.saveAll(items);
+
+                orderIndex = dto.getOrderIndex();
+            }
+        } else {
+            orderIndex = maxOrder + 1;
+        }
+
+        Item item = new Item();
+        modelMapper.map(dto, item);
+        item.setCategory(category);
+        item.setOrderIndex(orderIndex);
+
+        Item itemSaved = itemRepository.save(item);
+
+        for (Long allergenId : dto.getAllergensIds()) {
+            ItemAllergensCreateDto allergenDto = new ItemAllergensCreateDto();
+            allergenDto.setItemId(itemSaved.getId());
+            allergenDto.setAllergenId(allergenId);
+            itemAllergensService.create(allergenDto);
+        }
+
+        ItemDto itemDto = new ItemDto();
+        modelMapper.map(itemSaved, itemDto);
+        return itemDto;
+    }
+
+    @Transactional
+    public ItemDto save2(ItemCreateDto dto) {
         validateCreateDto(dto);
 
         Category category = categoryRepository.findById(dto.getCategory()).get();

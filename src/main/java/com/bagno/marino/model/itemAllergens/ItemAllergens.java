@@ -12,7 +12,7 @@ import lombok.Setter;
 public class ItemAllergens {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
