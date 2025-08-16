@@ -46,22 +46,29 @@ public class ItemService {
     private void validateCreateDto(ItemCreateDto dto) {
 
 
-        if (dto.getName().length() > 60) throw new IllegalArgumentException("Il nome puo contenere massimo 60 caratteri");
+        if (dto.getName().length() > 60)
+            throw new IllegalArgumentException("Il nome puo contenere massimo 60 caratteri");
         if (!categoryRepository.existsById(dto.getCategory())) throw new BadRequestException("La categoria non esiste");
-        if (dto.getDescription() != null && dto.getDescription().length() > 130) throw new IllegalArgumentException("La descrizione non può contenere al massimo 130 caratteri");
-        if (dto.getPrice() == null || dto.getPrice() < 0) throw new IllegalArgumentException("Il prezzo deve essere maggiore di 0");
+        if (dto.getDescription() != null && dto.getDescription().length() > 130)
+            throw new IllegalArgumentException("La descrizione non può contenere al massimo 130 caratteri");
+        if (dto.getPrice() == null || dto.getPrice() < 0)
+            throw new IllegalArgumentException("Il prezzo deve essere maggiore di 0");
         for (Long i : dto.getAllergensIds()) {
-            if (!allergensRepository.existsById(i)) throw new BadRequestException("L'allergene non esiste con id: " + i);
+            if (!allergensRepository.existsById(i))
+                throw new BadRequestException("L'allergene non esiste con id: " + i);
         }
-        if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0) throw new IllegalArgumentException("L'indice dell'ordine deve essere uguale o maggiore di 0");
+        if (dto.getOrderIndex() != null && dto.getOrderIndex() < 0)
+            throw new IllegalArgumentException("L'indice dell'ordine deve essere uguale o maggiore di 0");
     }
 
-    private void validateDelete(Long id) {}
+    private void validateDelete(Long id) {
+    }
 
     private void validateUpdate(ItemUpdateDto dto) {
         Item item = itemRepository.findById(dto.getId()).orElseThrow(() -> new EntityNotFoundException("Item non trovato"));
 
-        if (dto.getName().length() > 60) throw new IllegalArgumentException("Il nome puo contenere massimo 60 caratteri");
+        if (dto.getName().length() > 60)
+            throw new IllegalArgumentException("Il nome puo contenere massimo 60 caratteri");
         if (!categoryRepository.existsById(dto.getCategory())) {
             throw new BadRequestException("La categoria specificata non esiste");
         }
@@ -327,9 +334,14 @@ public class ItemService {
         itemRepository.deleteAll(items);
     }
 
-    public List<ItemWithCategoryDto> getAll() {
-        List<Category> categories = categoryRepository.findAllByOrderByOrderIndexAsc();
+    public List<ItemWithCategoryDto> getAll(String categoryName) {
 
+        List<Category> categories;
+        if (categoryName == null) {
+            categories = categoryRepository.findAllByOrderByOrderIndexAsc();
+        } else {
+            categories = categoryRepository.findAllByNameIgnoreCaseOrderByOrderIndexAsc(categoryName);
+        }
         List<ItemWithCategoryDto> response = new ArrayList<>();
         for (Category c : categories) {
             ItemWithCategoryDto dto = new ItemWithCategoryDto();
@@ -352,6 +364,7 @@ public class ItemService {
             response.add(dto);
         }
         return response;
+
     }
 
     public void changeAvailable(ItemChangeAvailableDto dto) {

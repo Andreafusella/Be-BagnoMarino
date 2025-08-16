@@ -36,8 +36,8 @@ public class ItemController {
 
     @GetMapping()
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getAll() {
-        return ResponseEntity.ok(itemService.getAll());
+    public ResponseEntity<?> getAll(@RequestParam(required = false) String categoryName) {
+        return ResponseEntity.ok(itemService.getAll(categoryName));
     }
 
     @DeleteMapping("/{itemId}")

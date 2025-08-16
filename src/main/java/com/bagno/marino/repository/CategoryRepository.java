@@ -40,4 +40,6 @@ public interface CategoryRepository extends BaseRepository<Category, Long>{
     Optional<Integer> findMaxOrderIndexByParent(@Param("parent") Category parent);
 
     List<Category> findByParentAndOrderIndexGreaterThanEqualOrderByOrderIndexAsc(Category parent, Integer orderIndex);
+
+    List<Category> findAllByNameIgnoreCaseOrderByOrderIndexAsc(String name);
 }
